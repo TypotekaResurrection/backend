@@ -3,13 +3,13 @@ use sea_orm::{entity::prelude::*, DeleteMany};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize, SimpleObject)]
-#[sea_orm(table_name = "articles")]
-#[graphql(concrete(name = "Article", params()))]
+#[sea_orm(table_name = "comments")]
+#[graphql(concrete(name = "Comment", params()))]
 pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: i32,
-    pub title: String,
+    pub time_date: String,
     pub text: String,
 }
 
@@ -27,10 +27,6 @@ impl ActiveModelBehavior for ActiveModel {}
 impl Entity {
     pub fn find_by_id(id: i32) -> Select<Entity> {
         Self::find().filter(Column::Id.eq(id))
-    }
-
-    pub fn find_by_title(title: &str) -> Select<Entity> {
-        Self::find().filter(Column::Title.eq(title))
     }
 
     pub fn delete_by_id(id: i32) -> DeleteMany<Entity> {
