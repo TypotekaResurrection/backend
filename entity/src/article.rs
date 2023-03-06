@@ -10,15 +10,43 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub title: String,
+    pub date: DateTime,
+    pub preview: String,
     pub text: String,
+    pub user_id: i32,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {}
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(has_many = "super::comment::Entity")]
+    Comment,
+    #[sea_orm(
+        belongs_to = "super::user::Entity",
+        from = "Column::UserId",
+        to = "super::user::Column::Id"
+    )]
+    User,
+}
 
-impl RelationTrait for Relation {
-    fn def(&self) -> RelationDef {
-        panic!("No RelationDef")
+impl Related<super::category::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::category_article::Relation::Category.def()
+    }
+
+    fn via() -> Option<RelationDef> {
+        Some(super::category_article::Relation::Article.def().rev())
+    }
+}
+
+impl Related<super::comment::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Comment.def()
+    }
+}
+
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
     }
 }
 

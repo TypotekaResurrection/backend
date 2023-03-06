@@ -1,5 +1,5 @@
 use async_graphql::*;
-use sea_orm::{entity::prelude::*, DeleteMany};
+use sea_orm::{entity::prelude::*, DeleteMany, DeriveRelation};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize, SimpleObject)]
@@ -16,12 +16,17 @@ pub struct Model {
     pub is_staff: bool,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {}
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(has_many = "super::comment::Entity")]
+    Comment,
+    #[sea_orm(has_many = "super::article::Entity")]
+    Article,
+}
 
-impl RelationTrait for Relation {
-    fn def(&self) -> RelationDef {
-        panic!("No RelationDef")
+impl Related<super::comment::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Comment.def()
     }
 }
 
