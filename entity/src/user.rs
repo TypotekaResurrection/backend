@@ -12,6 +12,7 @@ pub struct Model {
     pub email: String,
     pub first_name: String,
     pub last_name: String,
+    pub password: String,
     pub is_active: bool,
     pub is_staff: bool,
 }

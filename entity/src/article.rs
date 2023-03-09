@@ -26,6 +26,8 @@ pub enum Relation {
         to = "super::user::Column::Id"
     )]
     User,
+
+
 }
 
 impl Related<super::category::Entity> for Entity {
@@ -49,6 +51,7 @@ impl Related<super::user::Entity> for Entity {
         Relation::User.def()
     }
 }
+
 
 impl ActiveModelBehavior for ActiveModel {}
 

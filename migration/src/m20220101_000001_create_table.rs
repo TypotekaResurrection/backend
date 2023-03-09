@@ -1,4 +1,4 @@
-use entity::{sea_orm::{DbBackend, EntityTrait, Schema}, article};
+use entity::{sea_orm::{DbBackend, EntityTrait, Schema}, article, user, comment, category, category_article};
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -7,7 +7,13 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let stmts = vec![get_seaorm_create_stmt(article::Entity)];
+        let stmts = vec![
+            get_seaorm_create_stmt(article::Entity),
+            get_seaorm_create_stmt(user::Entity),
+            get_seaorm_create_stmt(comment::Entity),
+            get_seaorm_create_stmt(category::Entity),
+            get_seaorm_create_stmt(category_article::Entity)
+        ];
 
         for stmt in stmts {
             manager.create_table(stmt.to_owned()).await?;
@@ -17,7 +23,13 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let stmts = vec![get_seaorm_drop_stmt(article::Entity)];
+        let stmts = vec![
+            get_seaorm_drop_stmt(article::Entity),
+            get_seaorm_drop_stmt(user::Entity),
+            get_seaorm_drop_stmt(comment::Entity),
+            get_seaorm_drop_stmt(category::Entity),
+            get_seaorm_drop_stmt(category_article::Entity)
+        ];
 
         for stmt in stmts {
             manager.drop_table(stmt.to_owned()).await?;
