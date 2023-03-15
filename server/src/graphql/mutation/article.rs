@@ -36,7 +36,11 @@ impl ArticleMutation {
             user_id: Set(input.user_id),
             ..Default::default()
         };
-        let res = article.insert(db.get_connection()).await?;
+        let res = article.insert(db.get_connection()).await;
+        if let Err(e) = &res {
+            return Err(e.into());
+        }
+        let res = res.unwrap();
         for category_id in input.category_ids {
             let category_article = category_article::ActiveModel {
                 article_id: Set(res.id),
@@ -44,7 +48,7 @@ impl ArticleMutation {
             };
             category_article.insert(db.get_connection()).await?;
         }
-
+        println!("article");
         Ok(res)
     }
 

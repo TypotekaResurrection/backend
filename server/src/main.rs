@@ -29,7 +29,7 @@ async fn graphql_playground() -> impl IntoResponse {
 }
 
 static KEYS: Lazy<utils::jwt::Keys> = Lazy::new(|| {
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "Your secret here".to_owned());
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "1234".to_owned());
     utils::jwt::Keys::new(secret.as_bytes())
 });
 

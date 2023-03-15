@@ -27,7 +27,7 @@ impl LoginQuery {
                 let token = jsonwebtoken::encode(
                     &jsonwebtoken::Header::default(),
                     &user,
-                    &jsonwebtoken::EncodingKey::from_secret("secret".as_ref()),
+                    &jsonwebtoken::EncodingKey::from_secret("1234".as_ref()),
                 )
                 .unwrap();
 
