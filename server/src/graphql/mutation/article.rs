@@ -34,6 +34,7 @@ impl ArticleMutation {
             preview: Set(input.preview),
             date: Set(NaiveDateTime::default()),
             user_id: Set(input.user_id),
+            image_id: Set(None),
             ..Default::default()
         };
         let res = article.insert(db.get_connection()).await?;

@@ -3,15 +3,17 @@ mod graphql;
 
 use entity::async_graphql;
 
-use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
+use async_graphql::http::{GraphQLPlaygroundConfig, playground_source};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     extract::Extension,
     response::{Html, IntoResponse},
-    routing::get,
     Router,
+    routing::get,
 };
-use graphql::schema::{build_schema, AppSchema};
+use graphql::schema::{AppSchema, build_schema};
+
+use once_cell::sync::Lazy;
 
 #[cfg(debug_assertions)]
 use dotenv::dotenv;
@@ -25,6 +27,11 @@ async fn graphql_playground() -> impl IntoResponse {
         "/api/graphql",
     )))
 }
+
+static KEYS: Lazy<utils::jwt::Keys> = Lazy::new(|| {
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "Your secret here".to_owned());
+    utils::jwt::Keys::new(secret.as_bytes())
+});
 
 #[tokio::main]
 async fn main() {

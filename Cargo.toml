@@ -3,5 +3,6 @@
 members = [
   "server",
   "entity",
-  "migration"
+  "migration",
+  "utils",
 ]

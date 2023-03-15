@@ -45,4 +45,5 @@ impl Entity {
     pub fn delete_by_id(id: i32) -> DeleteMany<Entity> {
         Self::delete_many().filter(Column::Id.eq(id))
     }
+
 }

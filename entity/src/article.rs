@@ -14,6 +14,7 @@ pub struct Model {
     pub preview: String,
     pub text: String,
     pub user_id: i32,
+    pub image_id: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -26,8 +27,14 @@ pub enum Relation {
         to = "super::user::Column::Id"
     )]
     User,
+    #[sea_orm(has_one = "super::image::Entity")]
+    Image,
+}
 
-
+impl Related<super::image::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Image.def()
+    }
 }
 
 impl Related<super::category::Entity> for Entity {

@@ -7,9 +7,12 @@ edition = "2021"
 
 [dependencies]
 entity = { path = "../entity" }
-axum = "0.6.7"
+utils = { path = "../utils" }
+axum = {verstion="0.6.7", features = ["headers"]}
 tokio = { version = "1.25.0", features = ["full"] }
 dotenv = "0.15.0"
 async-graphql-axum = "5.0.6"
 chrono = {version = "0.4.19", features = ["serde"] }
+jsonwebtoken = "8.0"
+once_cell = "1.8"
 
