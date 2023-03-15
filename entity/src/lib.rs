@@ -1,5 +1,6 @@
 pub use async_graphql;
 pub use sea_orm;
+pub use serde;
 
 pub mod article;
 pub mod user;

@@ -1,5 +1,6 @@
 mod db;
 mod graphql;
+mod utils;
 
 use entity::async_graphql;
 
@@ -12,6 +13,7 @@ use axum::{
     Router,
 };
 use graphql::schema::{build_schema, AppSchema};
+use once_cell::sync::Lazy;
 
 #[cfg(debug_assertions)]
 use dotenv::dotenv;
@@ -25,6 +27,12 @@ async fn graphql_playground() -> impl IntoResponse {
         "/api/graphql",
     )))
 }
+
+static KEYS: Lazy<utils::jwt::Keys> = Lazy::new(|| {
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "Your secret here".to_owned());
+    utils::jwt::Keys::new(secret.as_bytes())
+});
+
 
 #[tokio::main]
 async fn main() {
