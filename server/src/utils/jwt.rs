@@ -1,6 +1,6 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use jsonwebtoken::{decode, Validation};
+use jsonwebtoken::{encode, Validation};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +12,7 @@ pub struct User {
 
 #[derive(Deserialize, Serialize)]
 pub struct Claims {
-    pub email: String,
+    pub id: i32,
     pub exp: u64,
 }
 
