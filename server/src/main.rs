@@ -16,12 +16,12 @@ use axum::{
 use graphql::schema::{build_schema, AppSchema};
 use once_cell::sync::Lazy;
 use async_graphql::Request;
-use utils::auth::AuthenticatedUser;
+use utils::auth::Token;
 
 #[cfg(debug_assertions)]
 use dotenv::dotenv;
 
-async fn graphql_handler(user: AuthenticatedUser, schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
+async fn graphql_handler(user: Token, schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner().data(user)).await.into()
 }
 

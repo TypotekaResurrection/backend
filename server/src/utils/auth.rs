@@ -9,18 +9,13 @@ use axum::{
 };
 use entity::sea_orm::DatabaseConnection;
 
-#[derive(Clone, Debug)]
-struct AppState {
-    token: Option<String>,
-}
-
 #[derive(Default, Debug)]
-pub struct AuthenticatedUser {
-    pub id: i32,
+pub struct Token {
+    pub token: String,
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for AuthenticatedUser
+impl<S> FromRequestParts<S> for Token
     where
         S: Send + Sync,
 {
@@ -32,10 +27,8 @@ impl<S> FromRequestParts<S> for AuthenticatedUser
                 .map(|token| token.token().to_string())
                 .unwrap_or_default();
 
-        println!("token: {}", token);
-
-        Ok(AuthenticatedUser {
-            id: 1
+        Ok(Token {
+            token
         })
     }
 }
