@@ -3,6 +3,7 @@ mod graphql;
 mod utils;
 
 use entity::async_graphql;
+use tower_http::cors::{Any, Cors, CorsLayer};
 
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
@@ -14,12 +15,14 @@ use axum::{
 };
 use graphql::schema::{build_schema, AppSchema};
 use once_cell::sync::Lazy;
+use async_graphql::Request;
+use utils::auth::AuthenticatedUser;
 
 #[cfg(debug_assertions)]
 use dotenv::dotenv;
 
-async fn graphql_handler(schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
-    schema.execute(req.into_inner()).await.into()
+async fn graphql_handler(user: AuthenticatedUser, schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
+    schema.execute(req.into_inner().data(user)).await.into()
 }
 
 async fn graphql_playground() -> impl IntoResponse {
@@ -40,6 +43,8 @@ async fn main() {
     dotenv().ok();
 
     let schema = build_schema().await;
+
+    let cors = CorsLayer::new().allow_origin(Any);
 
     let app = Router::new()
         .route(

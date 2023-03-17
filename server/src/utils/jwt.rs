@@ -3,6 +3,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use jsonwebtoken::{encode, Validation};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use serde::{Deserialize, Serialize};
+use crate::KEYS;
 
 #[derive(Deserialize)]
 pub struct User {
@@ -36,4 +37,9 @@ pub fn get_timestamp_8_hours_from_now() -> u64 {
     let since_the_epoch = now.duration_since(UNIX_EPOCH).expect("Time went backwards");
     let eighthoursfromnow = since_the_epoch + Duration::from_secs(28800);
     eighthoursfromnow.as_secs()
+}
+
+pub fn validate_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+    let data = jsonwebtoken::decode::<Claims>(token, &KEYS.decoding, &Validation::default())?;
+    Ok(data.claims)
 }

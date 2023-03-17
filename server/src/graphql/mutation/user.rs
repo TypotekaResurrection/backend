@@ -20,7 +20,8 @@ pub struct UserMutation;
 
 #[Object]
 impl UserMutation {
-    pub async fn create_user(&self, ctx: &Context<'_>, input: CreateUserInput, ) -> Result<user::Model> {
+    pub async fn create_user(&self, ctx: &Context<'_>, input: CreateUserInput) -> Result<user::Model> {
+        println!("create_user: ");
         let db = ctx.data::<Database>().unwrap();
 
         let user = user::Entity::find_by_email(&input.email)
