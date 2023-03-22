@@ -1,15 +1,11 @@
-use async_graphql::{Context, Object, Result, Error};
-use axum::Json;
-use entity::user::Entity as User;
-use entity::user;
-use entity::async_graphql::{self, InputObject, SimpleObject};
-use entity::sea_orm::{ColumnTrait, EntityTrait, QueryFilter, Set};
-use jsonwebtoken::{encode, Header, EncodingKey, Algorithm};
 
 use crate::db::Database;
-use crate::{KEYS};
-use utils::jwt::get_timestamp_8_hours_from_now;
-use utils::jwt::Claims;
+use entity::{user, async_graphql, sea_orm::EntityTrait};
+use async_graphql::{Context, Object, Result, Error};
+use entity::async_graphql::{InputObject, SimpleObject};
+
+#[derive(Default)]
+pub struct LoginQuery;
 
 #[derive(InputObject)]
 pub struct LoginInput {
@@ -17,39 +13,32 @@ pub struct LoginInput {
     pub password: String,
 }
 
-#[derive(SimpleObject)]
-pub struct LoginResponse {
-    pub access_token: String,
-    pub token_type: String,
-}
 
-#[derive(Default)]
-pub struct AuthQuery;
-
-
-
-impl AuthQuery {
-    async fn login(&self, ctx: &Context<'_>, input: LoginInput) -> Result<LoginResponse> {
+#[Object]
+impl LoginQuery {
+    async fn login(&self, ctx: &Context<'_>, email: String, password: String) -> Result<String> {
         let db = ctx.data::<Database>().unwrap();
 
-        let user = User::find_by_email(&input.email)
+        let user = user::Entity::find_by_email(email.as_str())
             .one(db.get_connection())
             .await
             .map_err(|e| e.to_string())?;
 
-        if let Some(_) = user {
-            let claims = Claims {
-                email: input.email.to_owned(),
-                exp: get_timestamp_8_hours_from_now(),
-            };
-            let token = encode(&Header::default(), &claims, &KEYS.encoding)?;
-            // return bearer token
-            Ok(LoginResponse {
-                access_token: token,
-                token_type: "Bearer".to_string(),
-            })
+        if let Some(user) = user {
+            if user.password == password {
+                let token = jsonwebtoken::encode(
+                    &jsonwebtoken::Header::default(),
+                    &user,
+                    &jsonwebtoken::EncodingKey::from_secret("1234".as_ref()),
+                )
+                .unwrap();
+
+                Ok(token)
             } else {
-                Err(Error::new("User does not exist"))
+                Err(Error::new("Invalid password"))
             }
+        } else {
+            Err(Error::new("User not found"))
         }
     }
+}

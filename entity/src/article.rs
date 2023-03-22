@@ -74,4 +74,8 @@ impl Entity {
     pub fn delete_by_id(id: i32) -> DeleteMany<Entity> {
         Self::delete_many().filter(Column::Id.eq(id))
     }
+
+    pub fn find_by_user_id(id: i32) -> Select<Entity> {
+        Self::find().filter(Column::UserId.eq(id))
+    }
 }

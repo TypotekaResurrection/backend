@@ -1,7 +1,9 @@
 mod db;
 mod graphql;
+mod utils;
 
 use entity::async_graphql;
+use tower_http::cors::{Any, Cors, CorsLayer};
 
 use async_graphql::http::{GraphQLPlaygroundConfig, playground_source};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
@@ -11,15 +13,17 @@ use axum::{
     Router,
     routing::get,
 };
-use graphql::schema::{AppSchema, build_schema};
 
+use graphql::schema::{build_schema, AppSchema};
 use once_cell::sync::Lazy;
+use async_graphql::Request;
+use crate::utils::auth::Token;
 
 #[cfg(debug_assertions)]
 use dotenv::dotenv;
 
-async fn graphql_handler(schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
-    schema.execute(req.into_inner()).await.into()
+async fn graphql_handler(user: Token, schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
+    schema.execute(req.into_inner().data(user)).await.into()
 }
 
 async fn graphql_playground() -> impl IntoResponse {
@@ -29,7 +33,8 @@ async fn graphql_playground() -> impl IntoResponse {
 }
 
 static KEYS: Lazy<utils::jwt::Keys> = Lazy::new(|| {
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "Your secret here".to_owned());
+
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "1234".to_owned());
     utils::jwt::Keys::new(secret.as_bytes())
 });
 
@@ -39,6 +44,8 @@ async fn main() {
     dotenv().ok();
 
     let schema = build_schema().await;
+
+    let cors = CorsLayer::new().allow_origin(Any);
 
     let app = Router::new()
         .route(
