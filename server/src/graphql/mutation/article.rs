@@ -6,6 +6,8 @@ use chrono::NaiveDateTime;
 
 use crate::db::Database;
 use crate::graphql::mutation::delete_result::DeleteResult;
+use crate::utils::auth::Token;
+use crate::utils::jwt::validate_token;
 
 // I normally separate the input types into separate files/modules, but this is just
 // a quick example.
@@ -16,7 +18,6 @@ pub struct CreateArticleInput {
     pub text: String,
     pub preview: String,
     pub category_ids: Vec<i32>,
-    pub user_id: i32,
 }
 
 
@@ -28,12 +29,20 @@ impl ArticleMutation {
     pub async fn create_article(&self, ctx: &Context<'_>, input: CreateArticleInput) -> Result<article::Model> {
         let db = ctx.data::<Database>().unwrap();
 
+        let token = ctx.data::<Token>()?;
+
+        let res = validate_token(token.token.as_str());
+        if let Err(error) = res {
+            return Err(error.into());
+        }
+        let claims = res.unwrap();
+
         let article = article::ActiveModel {
             title: Set(input.title),
             text: Set(input.text),
             preview: Set(input.preview),
             date: Set(NaiveDateTime::default()),
-            user_id: Set(input.user_id),
+            user_id: Set(claims.id),
             ..Default::default()
         };
         let res = article.insert(db.get_connection()).await;
