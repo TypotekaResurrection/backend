@@ -1,5 +1,6 @@
 use async_graphql::{Context, Object, Result};
-use entity::comment;
+use dotenv::Error;
+use entity::image;
 use entity::async_graphql::{self, InputObject, SimpleObject};
 use entity::sea_orm::{ActiveModelTrait, Set};
 
@@ -9,19 +10,25 @@ use crate::utils::auth::Token;
 use crate::utils::jwt::validate_token;
 
 #[derive(InputObject)]
-pub struct CreateCommentInput {
-    pub article_id: i32,
-    pub content: String,
+pub struct InputImage {
+    pub url: String,
+    pub alt: String,
 }
 
-
 #[derive(Default)]
-pub struct CommentMutation;
+pub struct ImageMutation;
+
+async fn get_binary(url: &str) -> Result<Vec<u8>, reqwest::Error> {
+    let res = reqwest::get(url).await?;
+    let buf = res.bytes().await?.to_vec();
+    Ok(buf)
+}
 
 #[Object]
-impl CommentMutation {
-    pub async fn create_comment(&self, ctx: &Context<'_>, input: CreateCommentInput, ) -> Result<comment::Model> {
+impl ImageMutation {
+    pub async fn create_image(&self, ctx: &Context<'_>, input: InputImage) -> Result<image::Model> {
         let db = ctx.data::<Database>().unwrap();
+
         let token = ctx.data::<Token>()?;
 
         let res = validate_token(token.token.as_str());
@@ -30,17 +37,15 @@ impl CommentMutation {
         }
         let claims = res.unwrap();
 
-        let comment = comment::ActiveModel {
-            article_id: Set(input.article_id),
-            user_id: Set(claims.id),
-            content: Set(input.content),
+        let image = image::ActiveModel {
+            binary: Set(get_binary(input.url.as_str()).await.unwrap()),
+            alt: Set(input.alt),
             ..Default::default()
         };
-
-        Ok(comment.insert(db.get_connection()).await?)
+        Ok(image.insert(db.get_connection()).await?)
     }
 
-    pub async fn delete_comment(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteResult> {
+    pub async fn delete_image(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteResult> {
         let db = ctx.data::<Database>().unwrap();
 
         let token = ctx.data::<Token>()?;
@@ -49,11 +54,9 @@ impl CommentMutation {
         if let Err(error) = res {
             return Err(error.into());
         }
+        let claims = res.unwrap();
 
-        let res = comment::Entity::delete_by_id(id)
-            .exec(db.get_connection())
-            .await?;
-
+        let res = image::Entity::delete_by_id(id).exec(db.get_connection()).await?;
         if res.rows_affected <= 1 {
             Ok(DeleteResult {
                 success: true,
@@ -64,5 +67,6 @@ impl CommentMutation {
         }
     }
 }
+
 
 

@@ -14,7 +14,6 @@ pub struct Model {
     pub preview: String,
     pub text: String,
     pub user_id: i32,
-    pub image_id: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -24,7 +23,8 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
-        to = "super::user::Column::Id"
+        to = "super::user::Column::Id",
+        on_delete = "Cascade"
     )]
     User,
     #[sea_orm(has_one = "super::image::Entity")]

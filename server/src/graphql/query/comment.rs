@@ -17,11 +17,7 @@ impl CommentQuery {
             .map_err(|e| e.to_string())?)
     }
 
-    async fn get_comment_by_id(
-        &self,
-        ctx: &Context<'_>,
-        id: i32,
-    ) -> Result<Option<comment::Model>> {
+    async fn get_comment_by_id(&self, ctx: &Context<'_>, id: i32, ) -> Result<Option<comment::Model>> {
         let db = ctx.data::<Database>().unwrap();
 
         Ok(comment::Entity::find_by_id(id)

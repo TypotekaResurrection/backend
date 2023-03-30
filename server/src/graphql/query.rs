@@ -4,7 +4,6 @@ pub mod article;
 pub mod user;
 mod comment;
 mod category;
-mod login;
 
 pub use article::ArticleQuery;
 pub use user::UserQuery;

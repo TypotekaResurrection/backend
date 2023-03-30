@@ -46,26 +46,23 @@ impl UserQuery {
             .map_err(|e| e.to_string())?)
     }
 
-    async fn login(&self, ctx: &Context<'_>, input: LoginInput) -> Result<Option<String>> {
+    async fn login(&self, ctx: &Context<'_>, input: LoginInput) -> Result<String> {
         let db = ctx.data::<Database>().unwrap();
-        println!("input: {:?}", input.email);
-        println!("input: {:?}", input.password);
 
-        let user = user::Entity::find_by_email(&input.email)
+        let user = user::Entity::find_by_email(input.email.as_str())
             .one(db.get_connection())
             .await
             .map_err(|e| e.to_string())?;
 
         if let Some(user) = user {
             if user.password == input.password {
-                let claims = Claims {
-                    id: user.id,
-                    exp: get_timestamp_8_hours_from_now(),
-                };
-                return Ok(Some(encode(&Header::default(), &claims, &KEYS.encoding).unwrap()));
+                let token = encode(&Header::default(), &user, &KEYS.encoding).unwrap();
+                Ok(token)
+            } else {
+                Err(Error::new("Invalid credentials"))
             }
+        } else {
+            Err(Error::new("User not found"))
         }
-
-        Ok(None)
     }
 }

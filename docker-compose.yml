@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/mydb
+      - DB_NAME=mydb
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+    command: >
+      sh -c "./target/debug/migration && ./target/debug/server"
+
+  db:
+    image: postgres:13-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=mydb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+    db_data:

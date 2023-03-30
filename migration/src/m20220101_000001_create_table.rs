@@ -8,8 +8,8 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let stmts = vec![
-            get_seaorm_create_stmt(article::Entity),
             get_seaorm_create_stmt(user::Entity),
+            get_seaorm_create_stmt(article::Entity),
             get_seaorm_create_stmt(comment::Entity),
             get_seaorm_create_stmt(category::Entity),
             get_seaorm_create_stmt(category_article::Entity)

@@ -26,14 +26,6 @@ impl UserMutation {
     pub async fn create_user(&self, ctx: &Context<'_>, input: RegisterInput) -> Result<user::Model> {
         println!("create_user: ");
         let db = ctx.data::<Database>().unwrap();
-        let token = ctx.data::<Token>()?;
-        println!("{}", token.token);
-        let res = validate_token(token.token.as_str());
-        if let Err(error) = res {
-            return Err(Error::new(error.to_string()));
-        }
-        let claims = res.unwrap();
-        println!("claims: {:?}", claims);
         let user = user::Entity::find_by_email(&input.email)
             .one(db.get_connection())
             .await?;

@@ -28,3 +28,21 @@ pub enum Relation {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl Entity {
+    pub fn find_by_category_id(category_id: i32) -> Select<Entity> {
+        Self::find().filter(Column::CategoryId.eq(category_id))
+    }
+
+    pub fn find_by_article_id(article_id: i32) -> Select<Entity> {
+        Self::find().filter(Column::ArticleId.eq(article_id))
+    }
+
+    pub fn delete_by_category_id(category_id: i32) -> DeleteMany<Entity> {
+        Self::delete_many().filter(Column::CategoryId.eq(category_id))
+    }
+
+    pub fn delete_by_article_id(article_id: i32) -> DeleteMany<Entity> {
+        Self::delete_many().filter(Column::ArticleId.eq(article_id))
+    }
+}

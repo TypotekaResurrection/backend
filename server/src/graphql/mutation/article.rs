@@ -64,6 +64,12 @@ impl ArticleMutation {
     pub async fn delete_article(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteResult> {
         let db = ctx.data::<Database>().unwrap();
 
+        let token = ctx.data::<Token>()?;
+
+        let res = validate_token(token.token.as_str());
+        if let Err(error) = res {
+            return Err(error.into());
+        }
         let res = article::Entity::delete_by_id(id)
             .exec(db.get_connection())
             .await?;
