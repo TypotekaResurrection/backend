@@ -2,6 +2,7 @@ mod db;
 mod graphql;
 mod utils;
 
+use std::net::SocketAddr;
 use entity::async_graphql;
 use tower_http::cors::{Any, Cors, CorsLayer};
 
@@ -52,11 +53,19 @@ async fn main() {
             "/api/graphql",
             get(graphql_playground).post(graphql_handler),
         )
-        .layer(Extension(schema));
+        .layer(Extension(schema))
+        .layer(cors);
 
     println!("Playground: http://localhost:3000/api/graphql");
 
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(3000);
+
+    let address = SocketAddr::from(([0, 0, 0, 0], port));
+
+    axum::Server::bind(&address)
         .serve(app.into_make_service())
         .await
         .unwrap();

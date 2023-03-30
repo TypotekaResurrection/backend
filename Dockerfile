@@ -4,7 +4,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY entity/ ./entity/
 COPY server/ ./server
 COPY migration/ ./migration
-COPY .env ./
+#COPY .env ./
 RUN cargo build
 
 CMD ["./target/debug/migration"]
