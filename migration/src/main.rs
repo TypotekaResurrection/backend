@@ -19,7 +19,4 @@ async fn main() {
     };
 
     cli::run_cli(migration::Migrator).await;
-    for i in 0..100 {
-       std::thread::sleep(std::time::Duration::from_millis(1000));
-    }
 }

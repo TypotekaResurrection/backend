@@ -16,5 +16,5 @@ RUN cp target/release/server /usr/src/app/executableS
 RUN rm -rf target
 
 
-CMD ["./executableM"]
-CMD ["./executableS"]
+#CMD ["./executableM"]
+#CMD ["./executableS"]
