@@ -5,6 +5,8 @@ use dotenv::dotenv;
 async fn main() {
     #[cfg(debug_assertions)]
     dotenv().ok();
+    println!("Current dir: {:?}", std::env::current_dir().unwrap());
+
 
     match std::env::var("DATABASE_URL") {
         Ok(val) => {
@@ -12,8 +14,12 @@ async fn main() {
         }
         Err(err) => {
             println!("DATABASE_URL not set: {}", err);
+            std::process::exit(1);
         }
     };
 
     cli::run_cli(migration::Migrator).await;
+    for i in 0..100 {
+       std::thread::sleep(std::time::Duration::from_millis(1000));
+    }
 }

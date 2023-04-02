@@ -14,8 +14,8 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_HOST=db
-    command: >
-      sh -c "./target/debug/migration && ./target/debug/server"
+#    command: >
+#      sh -c "./target/debug/migration && ./target/debug/server"
 
   db:
     image: postgres:13-alpine

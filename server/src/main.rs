@@ -20,7 +20,6 @@ use once_cell::sync::Lazy;
 use async_graphql::Request;
 use crate::utils::auth::Token;
 
-#[cfg(debug_assertions)]
 use dotenv::dotenv;
 
 async fn graphql_handler(user: Token, schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
@@ -34,7 +33,6 @@ async fn graphql_playground() -> impl IntoResponse {
 }
 
 static KEYS: Lazy<utils::jwt::Keys> = Lazy::new(|| {
-
     let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "1234".to_owned());
     utils::jwt::Keys::new(secret.as_bytes())
 });
