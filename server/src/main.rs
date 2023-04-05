@@ -21,6 +21,7 @@ use async_graphql::Request;
 use crate::utils::auth::Token;
 
 use dotenv::dotenv;
+use reqwest::Method;
 
 async fn graphql_handler(user: Token, schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner().data(user)).await.into()
@@ -44,15 +45,17 @@ async fn main() {
 
     let schema = build_schema().await;
 
-    let cors = CorsLayer::new().allow_origin(Any);
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_origin(Any);
 
     let app = Router::new()
         .route(
             "/api/graphql",
             get(graphql_playground).post(graphql_handler),
         )
-        .layer(Extension(schema))
-        .layer(cors);
+        .layer(cors)
+        .layer(Extension(schema));
 
     println!("Playground: http://localhost:3000/api/graphql");
 

@@ -34,6 +34,7 @@ impl UserQuery {
         let db = ctx.data::<Database>().unwrap();
         let token = ctx.data::<Token>();
         let res = validate_token(token.unwrap().token.as_str());
+        println!("{:?}", res);
         if let Err(e) = res {
             return Err(Error::new(e.to_string()));
         }
@@ -56,7 +57,11 @@ impl UserQuery {
 
         if let Some(user) = user {
             if user.password == input.password {
-                let token = encode(&Header::default(), &user, &KEYS.encoding).unwrap();
+                let claims = Claims {
+                    id: user.id,
+                    exp: get_timestamp_8_hours_from_now(),
+                };
+                let token = encode(&Header::default(), &claims, &KEYS.encoding).unwrap();
                 Ok(token)
             } else {
                 Err(Error::new("Invalid credentials"))
