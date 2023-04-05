@@ -13,6 +13,7 @@ use axum::{
     response::{Html, IntoResponse},
     Router,
     routing::get,
+    routing::post,
 };
 
 use graphql::schema::{build_schema, AppSchema};
@@ -50,14 +51,12 @@ async fn main() {
         .allow_origin(Any);
 
     let app = Router::new()
-        .route(
-            "/api/graphql",
-            get(graphql_playground).post(graphql_handler),
-        )
+        .route("/", get(graphql_playground))
+        .route("/api/graphql", post(graphql_handler))
         .layer(cors)
         .layer(Extension(schema));
 
-    println!("Playground: http://localhost:3000/api/graphql");
+    println!("Playground: http://localhost:3000");
 
     let port = std::env::var("PORT")
         .ok()
