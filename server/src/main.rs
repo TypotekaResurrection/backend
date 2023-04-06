@@ -48,6 +48,7 @@ async fn main() {
 
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST])
+        .allow_headers(Any)
         .allow_origin(Any);
 
     let app = Router::new()
@@ -58,12 +59,8 @@ async fn main() {
 
     println!("Playground: http://localhost:3000");
 
-    let port = std::env::var("PORT")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(3000);
 
-    let address = SocketAddr::from(([0, 0, 0, 0], port));
+    let address = SocketAddr::from(([0, 0, 0, 0], 3000));
 
     axum::Server::bind(&address)
         .serve(app.into_make_service())
