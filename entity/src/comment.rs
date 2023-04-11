@@ -10,7 +10,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: i32,
-    pub time_date: DateTime,
+    pub date: DateTime,
     pub content: String,
     pub article_id: i32,
     pub user_id: i32,
@@ -21,13 +21,15 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::article::Entity",
         from = "Column::ArticleId",
-        to = "super::article::Column::Id"
+        to = "super::article::Column::Id",
+        on_delete = "Cascade"
     )]
     Article,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
-        to = "super::user::Column::Id"
+        to = "super::user::Column::Id",
+        on_delete = "Cascade"
     )]
     User,
 }
@@ -54,5 +56,14 @@ impl Entity {
 
     pub fn delete_by_id(id: i32) -> DeleteMany<Entity> {
         Self::delete_many().filter(Column::Id.eq(id))
+    }
+    pub fn find_by_article_id(article_id: i32) -> Select<Entity> {
+        Self::find().filter(Column::ArticleId.eq(article_id))
+    }
+    pub fn delete_by_article_id(article_id: i32) -> DeleteMany<Entity> {
+        Self::delete_many().filter(Column::ArticleId.eq(article_id))
+    }
+    pub fn find_by_user_id(user_id: i32) -> Select<Entity> {
+        Self::find().filter(Column::UserId.eq(user_id))
     }
 }

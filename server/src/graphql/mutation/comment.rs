@@ -1,4 +1,5 @@
 use async_graphql::{Context, Object, Result};
+use chrono::{Local, NaiveDateTime};
 use entity::comment;
 use entity::async_graphql::{self, InputObject, SimpleObject};
 use entity::sea_orm::{ActiveModelTrait, Set};
@@ -34,6 +35,7 @@ impl CommentMutation {
             article_id: Set(input.article_id),
             user_id: Set(claims.id),
             content: Set(input.content),
+            date: Set(Local::now().naive_local()),
             ..Default::default()
         };
 

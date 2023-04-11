@@ -1,5 +1,6 @@
 use async_graphql::*;
 use sea_orm::{entity::prelude::*, DeleteMany};
+use sea_orm::sea_query::Expr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize, SimpleObject)]
@@ -13,6 +14,7 @@ pub struct Model {
     pub date: DateTime,
     pub preview: String,
     pub text: String,
+    pub image_url: String,
     pub user_id: i32,
 }
 
@@ -27,15 +29,8 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     User,
-    #[sea_orm(has_one = "super::image::Entity")]
-    Image,
 }
 
-impl Related<super::image::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Image.def()
-    }
-}
 
 impl Related<super::category::Entity> for Entity {
     fn to() -> RelationDef {
@@ -62,14 +57,17 @@ impl Related<super::user::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
+
 impl Entity {
     pub fn find_by_id(id: i32) -> Select<Entity> {
         Self::find().filter(Column::Id.eq(id))
     }
 
-    pub fn find_by_title(title: &str) -> Select<Entity> {
-        Self::find().filter(Column::Title.eq(title))
+    pub fn find_by_title(search: &str) -> Select<Entity> {
+        let search_pattern = format!("%{}%", search);
+        Self::find().filter(Expr::col(Column::Title).like(search_pattern))
     }
+
 
     pub fn delete_by_id(id: i32) -> DeleteMany<Entity> {
         Self::delete_many().filter(Column::Id.eq(id))
@@ -78,4 +76,5 @@ impl Entity {
     pub fn find_by_user_id(id: i32) -> Select<Entity> {
         Self::find().filter(Column::UserId.eq(id))
     }
+
 }

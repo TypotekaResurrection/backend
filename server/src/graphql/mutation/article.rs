@@ -1,8 +1,9 @@
 use async_graphql::{Context, Object, Result};
-use entity::{article, category_article, category};
+use entity::{article, category_article, category, comment, sea_orm};
 use entity::async_graphql::{self, InputObject, SimpleObject};
-use entity::sea_orm::{ActiveModelTrait, Set};
-use chrono::NaiveDateTime;
+use entity::sea_orm::{ActiveModelTrait, EntityTrait, ModelTrait, Set};
+use chrono::{Local, NaiveDateTime};
+use chrono::format::Item::Error;
 
 use crate::db::Database;
 use crate::graphql::mutation::delete_result::DeleteResult;
@@ -18,6 +19,16 @@ pub struct CreateArticleInput {
     pub text: String,
     pub preview: String,
     pub category_ids: Vec<i32>,
+    pub image_url: String,
+}
+
+#[derive(InputObject)]
+pub struct UpdateArticleInput {
+    pub title: Option<String>,
+    pub text: Option<String>,
+    pub preview: Option<String>,
+    pub category_ids: Option<Vec<i32>>,
+    pub image_url: Option<String>,
 }
 
 
@@ -41,8 +52,9 @@ impl ArticleMutation {
             title: Set(input.title),
             text: Set(input.text),
             preview: Set(input.preview),
-            date: Set(NaiveDateTime::default()),
+            date: Set(Local::now().naive_local()),
             user_id: Set(claims.id),
+            image_url: Set(input.image_url),
             ..Default::default()
         };
         let res = article.insert(db.get_connection()).await;
@@ -57,8 +69,46 @@ impl ArticleMutation {
             };
             category_article.insert(db.get_connection()).await?;
         }
-        println!("article");
+        println!("article created");
         Ok(res)
+    }
+
+    pub async fn update_article(&self, ctx: &Context<'_>, id: i32, input: UpdateArticleInput) -> Result<article::Model> {
+        let db = ctx.data::<Database>().unwrap();
+        let article = article::Entity::find_by_id(id)
+            .one(db.get_connection())
+            .await?
+            .ok_or("Record not found").unwrap();
+        let mut article: article::ActiveModel = article.into();
+
+        if let Some(title) = input.title {
+            article.title = Set(title);
+        }
+        if let Some(preview) = input.preview {
+            article.preview = Set(preview);
+        }
+        if let Some(text) = input.text {
+            article.text = Set(text);
+        }
+        if let Some(image_url) = input.image_url {
+            article.image_url = Set(image_url);
+        }
+
+        if let Some(category_ids) = input.category_ids {
+            for category_article in category_article::Entity::find_by_article_id(id).all(db.get_connection()).await? {
+                category_article.delete(db.get_connection()).await?;
+            }
+            for category_id in category_ids {
+                let category_article = category_article::ActiveModel {
+                    article_id: Set(id),
+                    category_id: Set(category_id),
+                };
+                category_article.insert(db.get_connection()).await?;
+            }
+        }
+
+        let updated_article = article.update(db.get_connection()).await?;
+        Ok(updated_article)
     }
 
     pub async fn delete_article(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteResult> {
@@ -70,10 +120,9 @@ impl ArticleMutation {
         if let Err(error) = res {
             return Err(error.into());
         }
-        let res = article::Entity::delete_by_id(id)
-            .exec(db.get_connection())
-            .await?;
-
+        let article = article::Entity::find_by_id(id).one(db.get_connection()).await?.unwrap();
+        let res = article.delete(db.get_connection()).await?;
+        println!("article deleted");
         if res.rows_affected <= 1 {
             Ok(DeleteResult {
                 success: true,

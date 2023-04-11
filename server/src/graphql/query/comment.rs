@@ -2,6 +2,8 @@ use async_graphql::{Context, Object, Result};
 use entity::{comment, async_graphql, sea_orm::EntityTrait};
 
 use crate::db::Database;
+use crate::utils::auth::Token;
+use crate::utils::jwt::validate_token;
 
 #[derive(Default)]
 pub struct CommentQuery;
@@ -21,6 +23,29 @@ impl CommentQuery {
         let db = ctx.data::<Database>().unwrap();
 
         Ok(comment::Entity::find_by_id(id)
+            .one(db.get_connection())
+            .await
+            .map_err(|e| e.to_string())?)
+    }
+    async fn get_comment_by_article_id(&self, ctx: &Context<'_>, article_id: i32) -> Result<Option<comment::Model>> {
+        let db = ctx.data::<Database>().unwrap();
+
+        Ok(comment::Entity::find_by_article_id(article_id)
+            .one(db.get_connection())
+            .await
+            .map_err(|e| e.to_string())?)
+    }
+
+    async fn get_comment_by_user_id(&self, ctx: &Context<'_>) -> Result<Option<comment::Model>> {
+        let db = ctx.data::<Database>().unwrap();
+        let token = ctx.data::<Token>()?;
+
+        let res = validate_token(token.token.as_str());
+        if let Err(error) = res {
+            return Err(error.into());
+        }
+        let claims = res.unwrap();
+        Ok(comment::Entity::find_by_user_id(claims.id)
             .one(db.get_connection())
             .await
             .map_err(|e| e.to_string())?)
