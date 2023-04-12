@@ -1,7 +1,9 @@
 use async_graphql::{Context, Object, Result};
-use entity::{category, user};
+use entity::{category, category_article, user};
 use entity::async_graphql::{self, InputObject, SimpleObject};
-use entity::sea_orm::{ActiveModelTrait, Set};
+use entity::sea_orm::{ActiveModelTrait, EntityTrait, Set};
+use entity::sea_orm::QueryFilter;
+use entity::sea_orm::ColumnTrait;
 
 use crate::db::Database;
 use crate::graphql::mutation::delete_result::DeleteResult;
@@ -46,16 +48,19 @@ impl CategoryMutation {
     }
 
     pub async fn delete_category(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteResult> {
+        //auth
         let db = ctx.data::<Database>().unwrap();
-
-
         let token = ctx.data::<Token>()?;
-
         let res = validate_token(token.token.as_str());
         if let Err(error) = res {
             return Err(error.into());
         }
+        //deleting related category_article
+        category_article::Entity::delete_by_category_id(id)
+            .exec(db.get_connection())
+            .await?;
 
+        //deleting category
         let res = category::Entity::delete_by_id(id)
             .exec(db.get_connection())
             .await?;

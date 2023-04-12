@@ -16,18 +16,21 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::category::Entity",
         from = "Column::CategoryId",
-        to = "super::category::Column::Id"
+        to = "super::category::Column::Id",
+        on_delete = "Cascade"
     )]
     Category,
     #[sea_orm(
         belongs_to = "super::article::Entity",
         from = "Column::ArticleId",
-        to = "super::article::Column::Id"
+        to = "super::article::Column::Id",
+        on_delete = "Cascade"
     )]
     Article,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
 
 impl Entity {
     pub fn find_by_category_id(category_id: i32) -> Select<Entity> {

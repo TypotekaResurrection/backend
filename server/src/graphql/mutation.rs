@@ -1,14 +1,14 @@
 use entity::async_graphql;
 
 pub mod article;
-mod registration;
+mod user;
 mod comment;
 mod category;
 mod delete_result;
 mod category_article;
 
 pub use article::ArticleMutation;
-pub use registration::UserMutation;
+pub use user::UserMutation;
 pub use comment::CommentMutation;
 pub use category::CategoryMutation;
 pub use category_article::CategoryArticleMutation;

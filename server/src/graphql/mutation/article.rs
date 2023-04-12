@@ -4,6 +4,8 @@ use entity::async_graphql::{self, InputObject, SimpleObject};
 use entity::sea_orm::{ActiveModelTrait, EntityTrait, ModelTrait, Set};
 use chrono::{Local, NaiveDateTime};
 use chrono::format::Item::Error;
+use entity::sea_orm::QueryFilter;
+use entity::sea_orm::ColumnTrait;
 
 use crate::db::Database;
 use crate::graphql::mutation::delete_result::DeleteResult;
@@ -113,13 +115,21 @@ impl ArticleMutation {
 
     pub async fn delete_article(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteResult> {
         let db = ctx.data::<Database>().unwrap();
-
         let token = ctx.data::<Token>()?;
-
         let res = validate_token(token.token.as_str());
         if let Err(error) = res {
             return Err(error.into());
         }
+        //deleting related entities
+        comment::Entity::delete_many()
+            .filter(comment::Column::ArticleId.eq(id))
+            .exec(db.get_connection())
+            .await?;
+        category_article::Entity::delete_many()
+            .filter(category_article::Column::ArticleId.eq(id))
+            .exec(db.get_connection())
+            .await?;
+        //deleting article
         let article = article::Entity::find_by_id(id).one(db.get_connection()).await?.unwrap();
         let res = article.delete(db.get_connection()).await?;
         println!("article deleted");
