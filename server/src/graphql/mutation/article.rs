@@ -1,5 +1,5 @@
 use async_graphql::{Context, Object, Result};
-use entity::{article, category_article, category, comment, sea_orm};
+use entity::{article, category_article, category, comment, sea_orm, user};
 use entity::async_graphql::{self, InputObject, SimpleObject};
 use entity::sea_orm::{ActiveModelTrait, EntityTrait, ModelTrait, Set};
 use chrono::{Local, NaiveDateTime};
@@ -49,6 +49,15 @@ impl ArticleMutation {
             return Err(error.into());
         }
         let claims = res.unwrap();
+
+        let user = user::Entity::find_by_id(claims.id).one(db.get_connection()).await?;
+
+        if user.is_none() {
+            return Err(async_graphql::Error::new("User has been deleted"));
+        }
+        if user.unwrap().is_staff {
+            return Err(async_graphql::Error::new("Permission denied"));
+        }
 
         let article = article::ActiveModel {
             title: Set(input.title),
