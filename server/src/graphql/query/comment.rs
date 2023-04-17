@@ -98,7 +98,7 @@ impl CommentQuery {
         comments.sort_by(|a, b| b.date.cmp(&a.date));
         if limit.is_some() {
             let limit = limit.unwrap();
-            comment.truncate(limit);
+            comments.truncate(limit);
         }
         let mut normal_comments = vec![];
         for comment in comments {
@@ -119,7 +119,7 @@ impl CommentQuery {
         comments.sort_by(|a, b| a.date.cmp(&b.date));
         if limit.is_some() {
             let limit = limit.unwrap();
-            comment.truncate(limit);
+            comments.truncate(limit);
         }
         let mut normal_comments = vec![];
         for comment in comments {
