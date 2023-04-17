@@ -49,14 +49,16 @@ pub async fn transform_comment(comment: comment::Model, db: &Database) -> Result
 
 #[Object]
 impl CommentQuery {
-    async fn get_comments(&self, ctx: &Context<'_>) -> Result<Vec<NormalComment>> {
+    async fn get_comments(&self, ctx: &Context<'_>, limit: usize) -> Result<Vec<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
 
-        let comment = comment::Entity::find()
+        let mut comment = comment::Entity::find()
             .all(db.get_connection())
             .await
             .map_err(|e| e.to_string())?;
 
+        comment.sort_by(|a, b| b.date.cmp(&a.date));
+        comment.truncate(limit);
         let mut normal_comments = vec![];
         for comment in comment {
             let normal_comment = transform_comment(comment, db).await?;
@@ -65,7 +67,7 @@ impl CommentQuery {
         Ok(normal_comments)
     }
 
-    async fn get_comment_by_id(&self, ctx: &Context<'_>, id: i32, ) -> Result<Option<comment::Model>> {
+    async fn get_comment_by_id(&self, ctx: &Context<'_>, id: i32) -> Result<Option<comment::Model>> {
         let db = ctx.data::<Database>().unwrap();
 
         Ok(comment::Entity::find_by_id(id)
@@ -74,7 +76,7 @@ impl CommentQuery {
             .map_err(|e| e.to_string())?)
     }
 
-    async fn get_comments_by_user_id(&self, ctx: &Context<'_>) -> Result<Vec<NormalComment>> {
+    async fn get_comments_by_user_id(&self, ctx: &Context<'_>, limit: usize) -> Result<Vec<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
         let token = ctx.data::<Token>()?;
 
@@ -83,13 +85,15 @@ impl CommentQuery {
             return Err(error.into());
         }
         let claims = res.unwrap();
-        let comments = comment::Entity::find_by_user_id(claims.id)
+        let mut comments = comment::Entity::find_by_user_id(claims.id)
             .all(db.get_connection())
             .await
             .map_err(|e| e.to_string())?;
         if comments.is_empty(){
             return Err("No comments".into());
         }
+        comments.sort_by(|a, b| b.date.cmp(&a.date));
+        comments.truncate(limit);
         let mut normal_comments = vec![];
         for comment in comments {
             let normal_comment = transform_comment(comment, db).await?;
@@ -98,7 +102,7 @@ impl CommentQuery {
         Ok(normal_comments)
     }
 
-    async fn get_comments_by_article_id(&self, ctx: &Context<'_>, article_id: i32) -> Result<Vec<NormalComment>> {
+    async fn get_comments_by_article_id(&self, ctx: &Context<'_>, article_id: i32, limit: usize) -> Result<Vec<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
 
         let mut comments = comment::Entity::find_by_article_id(article_id)
@@ -106,9 +110,8 @@ impl CommentQuery {
             .await
             .map_err(|e| e.to_string())?;
 
-        //sort comment by date
         comments.sort_by(|a, b| a.date.cmp(&b.date));
-
+        comments.truncate(limit);
         let mut normal_comments = vec![];
         for comment in comments {
             let normal_comment = transform_comment(comment, db).await?;
