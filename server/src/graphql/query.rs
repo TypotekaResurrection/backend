@@ -2,8 +2,8 @@ use entity::async_graphql;
 
 pub mod article;
 pub mod user;
-mod comment;
-mod category;
+pub mod comment;
+pub mod category;
 
 pub use article::ArticleQuery;
 pub use user::UserQuery;

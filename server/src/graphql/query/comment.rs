@@ -24,7 +24,7 @@ pub struct NormalComment {
     pub user_name: String,
 }
 
-async fn transform_comment(comment: comment::Model, db: &Database) -> Result<NormalComment> {
+pub async fn transform_comment(comment: comment::Model, db: &Database) -> Result<NormalComment> {
     let article_name = article::Entity::find_by_id(comment.article_id)
         .one(db.get_connection())
         .await
