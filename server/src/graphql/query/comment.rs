@@ -73,21 +73,8 @@ impl CommentQuery {
             .await
             .map_err(|e| e.to_string())?)
     }
-    async fn get_comment_by_article_id(&self, ctx: &Context<'_>, article_id: i32) -> Result<Option<NormalComment>> {
-        let db = ctx.data::<Database>().unwrap();
 
-        let comment = comment::Entity::find_by_article_id(article_id)
-            .one(db.get_connection())
-            .await
-            .map_err(|e| e.to_string())?;
-        if comment == None {
-            return Ok(None);
-        }
-        let normal_comment = transform_comment(comment.unwrap(), db).await?;
-        Ok(Some(normal_comment))
-    }
-
-    async fn get_comments_by_user_id(&self, ctx: &Context<'_>) -> Result<Option<NormalComment>> {
+    async fn get_comments_by_user_id(&self, ctx: &Context<'_>) -> Result<Vec<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
         let token = ctx.data::<Token>()?;
 
@@ -96,24 +83,31 @@ impl CommentQuery {
             return Err(error.into());
         }
         let claims = res.unwrap();
-        let comment = comment::Entity::find_by_user_id(claims.id)
-            .one(db.get_connection())
+        let comments = comment::Entity::find_by_user_id(claims.id)
+            .all(db.get_connection())
             .await
             .map_err(|e| e.to_string())?;
-        if comment == None {
-            return Ok(None);
+        if comments.is_empty(){
+            return Err("No comments".into());
         }
-        let normal_comment = transform_comment(comment.unwrap(), db).await?;
-        Ok(Some(normal_comment))
+        let mut normal_comments = vec![];
+        for comment in comments {
+            let normal_comment = transform_comment(comment, db).await?;
+            normal_comments.push(normal_comment);
+        }
+        Ok(normal_comments)
     }
 
     async fn get_comments_by_article_id(&self, ctx: &Context<'_>, article_id: i32) -> Result<Vec<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
 
-        let comments = comment::Entity::find_by_article_id(article_id)
+        let mut comments = comment::Entity::find_by_article_id(article_id)
             .all(db.get_connection())
             .await
             .map_err(|e| e.to_string())?;
+
+        //sort comment by date
+        comments.sort_by(|a, b| a.date.cmp(&b.date));
 
         let mut normal_comments = vec![];
         for comment in comments {
