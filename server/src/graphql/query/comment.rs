@@ -87,7 +87,7 @@ impl CommentQuery {
         Ok(Some(normal_comment))
     }
 
-    async fn get_comment_by_user_id(&self, ctx: &Context<'_>) -> Result<Option<NormalComment>> {
+    async fn get_comments_by_user_id(&self, ctx: &Context<'_>) -> Result<Option<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
         let token = ctx.data::<Token>()?;
 
@@ -105,6 +105,22 @@ impl CommentQuery {
         }
         let normal_comment = transform_comment(comment.unwrap(), db).await?;
         Ok(Some(normal_comment))
+    }
+
+    async fn get_comments_by_article_id(&self, ctx: &Context<'_>, article_id: i32) -> Result<Vec<NormalComment>> {
+        let db = ctx.data::<Database>().unwrap();
+
+        let comments = comment::Entity::find_by_article_id(article_id)
+            .all(db.get_connection())
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let mut normal_comments = vec![];
+        for comment in comments {
+            let normal_comment = transform_comment(comment, db).await?;
+            normal_comments.push(normal_comment);
+        }
+        Ok(normal_comments)
     }
 }
 
