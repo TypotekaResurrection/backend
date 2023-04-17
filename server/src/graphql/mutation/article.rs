@@ -55,7 +55,7 @@ impl ArticleMutation {
         if user.is_none() {
             return Err(async_graphql::Error::new("User has been deleted"));
         }
-        if user.unwrap().is_staff {
+        if !user.unwrap().is_staff {
             return Err(async_graphql::Error::new("Permission denied"));
         }
 

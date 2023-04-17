@@ -47,6 +47,33 @@ impl CategoryMutation {
         Ok(category.insert(db.get_connection()).await?)
     }
 
+    pub async fn update_category(&self, ctx: &Context<'_>, id: i32, input: CreateCategoryInput) -> Result<category::Model> {
+        let db = ctx.data::<Database>().unwrap();
+
+        let token = ctx.data::<Token>()?;
+
+        let res = validate_token(token.token.as_str());
+        if let Err(error) = res {
+            return Err(error.into());
+        }
+        let claims = res.unwrap();
+        let user = user::Entity::find_by_id(claims.id).one(db.get_connection()).await?;
+        if user.is_none() {
+            return Err(async_graphql::Error::new("User has been deleted"));
+        }
+        if let Some(user) = user {
+            if !user.is_staff{
+                return Err(async_graphql::Error::new("Permission denied"));
+            }
+        }
+
+        let category = category::ActiveModel {
+            name: Set(input.name),
+            ..Default::default()
+        };
+        Ok(category.update(db.get_connection()).await?)
+    }
+
     pub async fn delete_category(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteResult> {
         //auth
         let db = ctx.data::<Database>().unwrap();

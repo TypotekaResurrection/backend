@@ -1,22 +1,68 @@
 use async_graphql::{Context, Object, Result};
-use entity::{comment, async_graphql, sea_orm::EntityTrait};
+use entity::{comment, async_graphql, sea_orm::EntityTrait, article, user};
 
 use crate::db::Database;
 use crate::utils::auth::Token;
 use crate::utils::jwt::validate_token;
 
+
+use async_graphql::*;
+use serde::{Deserialize, Serialize};
+use entity::sea_orm::prelude::DateTime;
+
 #[derive(Default)]
 pub struct CommentQuery;
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, SimpleObject)]
+#[graphql(concrete(name = "Comment", params()))]
+pub struct NormalComment {
+    #[serde(skip_deserializing)]
+    pub id: i32,
+    pub date: DateTime,
+    pub content: String,
+    pub article_name: String,
+    pub user_name: String,
+}
+
+async fn transform_comment(comment: comment::Model, db: &Database) -> Result<NormalComment> {
+    let article_name = article::Entity::find_by_id(comment.article_id)
+        .one(db.get_connection())
+        .await
+        .map_err(|e| e.to_string())?
+        .unwrap()
+        .title;
+    let user = user::Entity::find_by_id(comment.user_id)
+        .one(db.get_connection())
+        .await
+        .map_err(|e| e.to_string())?
+        .unwrap();
+    let user_name = user.last_name + user.first_name.as_str();
+    let normal_comment = NormalComment {
+        id: comment.id,
+        date: comment.date,
+        content: comment.content,
+        article_name,
+        user_name,
+    };
+    Ok(normal_comment)
+}
+
 #[Object]
 impl CommentQuery {
-    async fn get_comments(&self, ctx: &Context<'_>) -> Result<Vec<comment::Model>> {
+    async fn get_comments(&self, ctx: &Context<'_>) -> Result<Vec<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
 
-        Ok(comment::Entity::find()
+        let comment = comment::Entity::find()
             .all(db.get_connection())
             .await
-            .map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
+
+        let mut normal_comments = vec![];
+        for comment in comment {
+            let normal_comment = transform_comment(comment, db).await?;
+            normal_comments.push(normal_comment);
+        }
+        Ok(normal_comments)
     }
 
     async fn get_comment_by_id(&self, ctx: &Context<'_>, id: i32, ) -> Result<Option<comment::Model>> {
@@ -27,16 +73,21 @@ impl CommentQuery {
             .await
             .map_err(|e| e.to_string())?)
     }
-    async fn get_comment_by_article_id(&self, ctx: &Context<'_>, article_id: i32) -> Result<Option<comment::Model>> {
+    async fn get_comment_by_article_id(&self, ctx: &Context<'_>, article_id: i32) -> Result<Option<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
 
-        Ok(comment::Entity::find_by_article_id(article_id)
+        let comment = comment::Entity::find_by_article_id(article_id)
             .one(db.get_connection())
             .await
-            .map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
+        if comment == None {
+            return Ok(None);
+        }
+        let normal_comment = transform_comment(comment.unwrap(), db).await?;
+        Ok(Some(normal_comment))
     }
 
-    async fn get_comment_by_user_id(&self, ctx: &Context<'_>) -> Result<Option<comment::Model>> {
+    async fn get_comment_by_user_id(&self, ctx: &Context<'_>) -> Result<Option<NormalComment>> {
         let db = ctx.data::<Database>().unwrap();
         let token = ctx.data::<Token>()?;
 
@@ -45,9 +96,16 @@ impl CommentQuery {
             return Err(error.into());
         }
         let claims = res.unwrap();
-        Ok(comment::Entity::find_by_user_id(claims.id)
+        let comment = comment::Entity::find_by_user_id(claims.id)
             .one(db.get_connection())
             .await
-            .map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
+        if comment == None {
+            return Ok(None);
+        }
+        let normal_comment = transform_comment(comment.unwrap(), db).await?;
+        Ok(Some(normal_comment))
     }
 }
+
+

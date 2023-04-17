@@ -11,9 +11,8 @@ pub use article::ArticleMutation;
 pub use user::UserMutation;
 pub use comment::CommentMutation;
 pub use category::CategoryMutation;
-pub use category_article::CategoryArticleMutation;
 
 // Add your other ones here to create a unified Mutation object
 // e.x. Mutation(ArticleMutation, OtherMutation, OtherOtherMutation)
 #[derive(async_graphql::MergedObject, Default)]
-pub struct Mutation(ArticleMutation, UserMutation, CommentMutation, CategoryMutation, CategoryArticleMutation);
+pub struct Mutation(ArticleMutation, UserMutation, CommentMutation, CategoryMutation);
