@@ -1,7 +1,9 @@
 use async_graphql::{Context, Object, Result};
-use entity::{category, category_article, user};
+use entity::{article, category_article, category, comment, sea_orm, user};
 use entity::async_graphql::{self, InputObject, SimpleObject};
-use entity::sea_orm::{ActiveModelTrait, EntityTrait, Set};
+use entity::sea_orm::{ActiveModelTrait, EntityTrait, ModelTrait, Set};
+use chrono::{Local, NaiveDateTime};
+use chrono::format::Item::Error;
 use entity::sea_orm::QueryFilter;
 use entity::sea_orm::ColumnTrait;
 
@@ -51,27 +53,15 @@ impl CategoryMutation {
         let db = ctx.data::<Database>().unwrap();
 
         let token = ctx.data::<Token>()?;
-
+        let category = category::Entity::find_by_id(id).one(db.get_connection()).await?.unwrap();
         let res = validate_token(token.token.as_str());
         if let Err(error) = res {
             return Err(error.into());
         }
-        let claims = res.unwrap();
-        let user = user::Entity::find_by_id(claims.id).one(db.get_connection()).await?;
-        if user.is_none() {
-            return Err(async_graphql::Error::new("User has been deleted"));
-        }
-        if let Some(user) = user {
-            if !user.is_staff{
-                return Err(async_graphql::Error::new("Permission denied"));
-            }
-        }
-
-        let category = category::ActiveModel {
-            name: Set(input.name),
-            ..Default::default()
-        };
-        Ok(category.update(db.get_connection()).await?)
+        let mut category: category::ActiveModel = category.into();
+        category.name = Set(input.name);
+        let updated_category = category.update(db.get_connection()).await?;
+        Ok(updated_category)
     }
 
     pub async fn delete_category(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteResult> {
