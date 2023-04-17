@@ -39,7 +39,7 @@ impl CommentMutation {
             ..Default::default()
         };
         let comment = comment.insert(db.get_connection()).await?;
-
+        // transform from active model to normal comment
         let article_name = article::Entity::find_by_id(comment.article_id)
             .one(db.get_connection())
             .await
